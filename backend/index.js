@@ -7,13 +7,14 @@ const bcrypt = require("bcryptjs");
 
 //file imports
 const User = require("./models/User");
+const Task = require("./models/Task");
 
 const app = express();
 
 // middlewares
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "http://localhost:5174",
     credentials: true,
   })
 );
@@ -65,7 +66,46 @@ app.get("/current_user", async (req, res) => {
   }
   res.json({ loggedIn: false });
 });
+app.post('/tasks',async(req,res)=>{
+  const { title, description, dueDate, priority } = req.body;
+  try {
+    const newTask = new Task({
+      user: req.session.user,
+      title,
+      description,
+      dueDate,
+      priority,
+    });
+    const savedTask = await newTask.save();
+    res.status(201).json(savedTask);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create task" });
+  }
+});
+app.get('/tasks',async(req,res)=>{
+  const tasks = await Task.find({user:req.session.user}).sort({createdAt: -1});
+  res.status(200).json(tasks);
+})
 
+app.put('/tasks/:id', async (req, res) => {
+  try {
+    const updated = await Task.findByIdAndUpdate(
+      { _id: req.params.id },
+      { ...req.body },
+      { new: true }
+    );
+    res.status(200).json(updated);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update task" });
+  }
+});
+
+app.delete("/tasks/:id",async(req,res)=>{
+  const result = await Task.findOneAndDelete({_id:req.params.id});
+  if(result){
+    res.status(200).json({message:"Task deleted successfully"});
+  }
+})
 app.listen(process.env.PORT, () => {
   console.log(`Server is running on port ${process.env.PORT}`);
 });

@@ -34,6 +34,7 @@ function Homepage() {
       ) : (
         <Link to="/login">login</Link>
       )}
+      <Link to="/tasks">Tasks</Link>
       Homepage
     </div>
   );
